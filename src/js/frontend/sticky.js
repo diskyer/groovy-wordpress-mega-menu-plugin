@@ -1,6 +1,7 @@
 import _ from 'lodash';
-import { isMobile } from '../shared/helpers';
-import { recalculatePaddingsAlignCenter } from './split';
+import {isMobile} from '../shared/helpers';
+import {recalculatePaddingsAlignCenter} from './split';
+import {dropdownCloseAll} from './dropdown';
 
 var options;
 var wpAdminBar;
@@ -10,7 +11,7 @@ var toolbar;
 var lodash = _.noConflict();
 var navbarWrapper;
 
-function getStickySettings () {
+function getStickySettings() {
   let type = options.stickyHeader;
   let offset = options.stickyOffset;
   const {stickyHeaderMobile, stickyOffsetMobile} = options;
@@ -27,7 +28,7 @@ function getStickySettings () {
   return {type, offset};
 }
 
-function getStickyMenuOffset () {
+function getStickyMenuOffset() {
   let adminbarHeight = wpAdminBar === null ? 0 : wpAdminBar.offsetHeight;
   let toolbarHeight = toolbar === null ? 0 : toolbar.offsetHeight;
   let stickyMenuOffset;
@@ -58,6 +59,10 @@ function getStickyMenuOffset () {
     toolbarHeight = 0;
   }
 
+  if (window.pageYOffset === 0) {
+    toolbarHeight = 0;
+  }
+
   if (isMobile(options.mobileWidth) &&
     options.header &&
     options.hideToolbarOnMobile) {
@@ -68,7 +73,7 @@ function getStickyMenuOffset () {
   return stickyMenuOffset;
 }
 
-function handleSlideDown () {
+function handleSlideDown() {
   var stickyOffset = navbarWrapper.offsetHeight;
   const stickySettings = getStickySettings();
 
@@ -78,12 +83,31 @@ function handleSlideDown () {
     stickyOffset = window.innerHeight / 100 * optionsStickyOffset;
   }
 
-  if (window.pageYOffset >= stickyOffset && navbar) {
-    let toolbarHeight = toolbar === null ? 0 : toolbar.offsetHeight;
-    let headerStickyHeight = isMobile(options.mobileWidth) ? options.mobileHeaderStickyHeight : options.headerHeightSticky;
+  let toolbarHeight = toolbar === null ? 0 : toolbar.offsetHeight;
+  let headerNormalHeight = isMobile(options.mobileWidth) ? options.mobileHeaderHeight : options.headerHeight;
+  let headerStickyHeight = isMobile(options.mobileWidth) ? options.mobileHeaderStickyHeight : options.headerHeightSticky;
+  let topOffsetWrapper = headerStickyHeight + toolbarHeight;
+  let topOffsetNormalWrapper = headerNormalHeight + toolbarHeight;
 
-    let topOffsetWrapper = headerStickyHeight + toolbarHeight;
+  let maxOffset = Math.max(topOffsetWrapper, topOffsetNormalWrapper) + 40;
 
+  if (window.pageYOffset < maxOffset && navbar) {
+    navbar.classList.remove('gm-navbar-sticky-toggle');
+
+    navbarWrapper.style.top = null;
+    navbarWrapper.style.transform = null;
+
+    if (navbarWrapper.getAttribute('style') === '') {
+      navbarWrapper.removeAttribute('style');
+    }
+
+    recalculatePaddingsAlignCenter({options});
+    if (isMobile(options.mobileWidth) && options.mobilePreventAutoclose) {
+      // do nothing ...
+    } else {
+      dropdownCloseAll(0);
+    }
+  } else if (window.pageYOffset >= stickyOffset && navbar) {
     if (
       toolbarHeight &&
       (!isMobile(options.mobileWidth) || !options.hideToolbarOnMobile) &&
@@ -99,38 +123,41 @@ function handleSlideDown () {
     navbarWrapper.style.transform = `translateY(${headerStickyHeight + getStickyMenuOffset() + toolbarHeight}px)`;
 
     recalculatePaddingsAlignCenter({options});
-  } else if (window.pageYOffset === 0 && navbar) {
-    navbar.classList.remove('gm-navbar-sticky-toggle');
-
-    navbarWrapper.style.top = null;
-    navbarWrapper.style.transform = null;
-
-    if (navbarWrapper.getAttribute('style') === '') {
-      navbarWrapper.removeAttribute('style');
+    if (isMobile(options.mobileWidth) && options.mobilePreventAutoclose) {
+      // do nothing ...
+    } else {
+      dropdownCloseAll(0);
     }
-
-    recalculatePaddingsAlignCenter({options});
   }
+
 }
 
-function handleFixedSticky () {
-  if (window.pageYOffset > 0 && navbar) {
-    navbar.classList.add('gm-navbar-sticky-toggle');
-    navbarWrapper.style.transform = `translateY(${getStickyMenuOffset()}px)`;
-    recalculatePaddingsAlignCenter({options});
-  } else if (window.pageYOffset === 0 && navbar) {
-    navbar.classList.remove('gm-navbar-sticky-toggle');
-    navbarWrapper.style.transform = null;
+function handleFixedSticky() {
 
-    if (navbarWrapper.getAttribute('style') === '') {
-      navbarWrapper.removeAttribute('style');
+  let offsetPixels = getStickyMenuOffset();
+
+  if (navbar) {
+
+    if (window.pageYOffset > 0) {
+      navbar.classList.add('gm-navbar-sticky-toggle');
+    } else if (window.pageYOffset === 0) {
+      navbar.classList.remove('gm-navbar-sticky-toggle');
     }
 
+    navbarWrapper.style.transform = `translateY(${offsetPixels}px)`;
+
     recalculatePaddingsAlignCenter({options});
+    if (isMobile(options.mobileWidth) && options.mobilePreventAutoclose) {
+      // do nothing ...
+    } else {
+      dropdownCloseAll(0);
+    }
+
   }
+
 }
 
-export function enableStickyNav () {
+export function enableStickyNav() {
   const stickySettings = getStickySettings();
 
   adminbarHeight = wpAdminBar === null ? 0 : wpAdminBar.offsetHeight;
@@ -161,7 +188,7 @@ export function enableStickyNav () {
   }
 }
 
-export function disableStickyNav () {
+export function disableStickyNav() {
   if (options.stickyHeader === 'slide-down' && navbar) {
     window.removeEventListener('scroll', handleSlideDown);
     navbar.classList.remove('gm-navbar-sticky', 'gm-navbar-sticky-toggle');
@@ -177,7 +204,7 @@ export function disableStickyNav () {
   }
 }
 
-export function initStickyNav (args) {
+export function initStickyNav(args) {
   options = args.options;
   wpAdminBar = args.wpAdminBar;
   adminbarHeight = args.adminbarHeight;

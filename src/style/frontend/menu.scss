@@ -11,6 +11,12 @@ NAVBAR GENERAL STYLES
     width: 100%;
     margin-right: auto;
     margin-left: auto;
+    transition: height 0.2s ease;
+  }
+
+  &.gm-navbar-fixed-sticky .gm-wrapper {
+    position: fixed;
+    transition: transform 0.05s ease;
   }
 
   .gm-logo {
@@ -62,7 +68,7 @@ NAVBAR GENERAL STYLES
 
   .gm-container,
   .gm-navbar-nav {
-    transition: height 0.2s;
+    transition: height 0.2s ease;
   }
 }
 
@@ -141,15 +147,14 @@ NAVBAR GENERAL STYLES
     line-height: 25px;
     align-items: center;
     justify-content: space-between;
+  }
+
+  .gm-anchor > .gm-caret,
+  .gm-anchor:not(.gm-anchor--empty) {
     cursor: pointer;
   }
 
-  .gm-anchor {
-    cursor: pointer;
-  }
-
-  .gm-menu-item__txt-wrapper,
-  .gm-menu-item__icon {
+  .gm-menu-item__txt-wrapper {
     transition: all 0.15s;
   }
 
@@ -232,6 +237,10 @@ NAVBAR GENERAL STYLES
   }
 }
 
+.gm-navbar--style-4 .gm-menu-item--lvl-0 .gm-anchor .gm-menu-item__icon {
+  transition: all 0.2s;
+}
+
 .gm-navbar--has-shadow:not(.gm-navbar-sticky-toggle) .gm-inner {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
@@ -244,6 +253,7 @@ NAVBAR GENERAL STYLES
   position: relative;
   font-size: 16px;
   line-height: 1;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .gm-navbar.gm-navbar--hide-gm-caret .gm-navbar-nav > .gm-menu-item > .gm-anchor > .gm-caret {
@@ -255,21 +265,6 @@ NAVBAR GENERAL STYLES
   align-items: center;
 }
 
-.gm-navbar--has-divider .gm-navbar-nav > li:not(:last-of-type) > .gm-anchor {
-  position: relative;
-
-  &::before {
-    position: absolute;
-    width: 1px;
-    height: 30px;
-    opacity: 0.4;
-    content: '';
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-}
-
 .gm-menu-item__txt-wrapper {
   position: relative;
   display: flex;
@@ -277,20 +272,103 @@ NAVBAR GENERAL STYLES
 }
 
 /* bugfix: For sub-submenus that climb out of the right side of the screen and, on some WP Themes, they call the horizontal scroll of the browser when opening the first level submenu. */
-.gm-navbar.gm-navbar-dropdown-opened {
+.gm-navbar {
   .gm-navbar-nav > .gm-dropdown:not(.gm-opened-before) .gm-dropdown-menu-wrapper {
-    display: none;
+    display: block;
+    visibility: hidden;
   }
-
   .gm-navbar-nav > .gm-dropdown:hover .gm-dropdown-menu-wrapper {
     display: block;
+    visibility: visible;
   }
-
   .gm-navbar-nav > .gm-dropdown .gm-dropdown-menu .gm-dropdown-submenu:not(.gm-opened-before) .gm-dropdown-menu-wrapper {
-    display: none;
+    display: block;
+    visibility: hidden;
   }
-
   .gm-navbar-nav > .gm-dropdown .gm-dropdown-menu .gm-dropdown-submenu:hover > .gm-dropdown-menu-wrapper {
     display: block;
+    visibility: visible;
   }
+}
+
+.gm-mobile-postwrap {
+  display: none;
+}
+
+/* ------------------------------------ Mobile menus Slider Style */
+
+.gm-navigation-drawer--mobile:not(.gm-transition-work) {
+  .gm-item-hidden {
+    display: none;
+  }
+}
+
+.gm-navigation-drawer--mobile:not(.gm-mobile-submenu-style-slider) {
+  .gm-dropdown-menu-title {
+    display: none;
+  }
+}
+
+.gm-mobile-submenu-style-slider {
+  .gm-grid-container {
+    overflow: hidden;
+    position: absolute;
+  }
+
+  .gm-navbar-nav .gm-dropdown > .gm-dropdown-menu-wrapper {
+    top: 0;
+    position: absolute;
+    left: 100%;
+    width: 100%;
+    min-height: 100%;
+    z-index: 4;
+    transition: transform ease-out 0.43s;
+  }
+
+  &.gm-navigation-drawer--open .gm-navbar-nav .gm-dropdown:not(.gm-open) > .gm-dropdown-menu-wrapper {
+    max-height: 1em;
+    overflow: hidden;
+  }
+
+  &.gm-navigation-drawer--open .gm-navbar-nav .gm-dropdown > .gm-dropdown-menu-wrapper {
+    display: block;
+  }
+
+  &.gm-navigation-drawer--open.gm-transition-work .gm-navbar-nav .gm-menu-item {
+    display: block;
+  }
+
+  .gm-dropdown-menu-title {
+    display: flex;
+    position: relative;
+    top: 0;
+    width: 100%;
+    height: 50px;
+    padding: 0 15px;
+
+    .gm-caret {
+      top: auto;
+      position: absolute;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .gm-navbar-nav .gm-dropdown.gm-open > .gm-dropdown-menu-wrapper {
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+.gm-burger {
+  transition: margin cubic-bezier(0.7, 0, 0.3, 1) 0.2s;
+}
+
+.gm-anchor,
+.gm-burger,
+.gm-search,
+.gm-menu-btn,
+.gm-minicart {
+  -webkit-tap-highlight-color: transparent;
 }

@@ -76,12 +76,12 @@ if ( ! class_exists( 'GroovyMenuStyle' ) ) {
 				if ( ! empty( $cache_config ) ) {
 					$this->optionsGlobal = $cache_config;
 				} else {
-					$this->optionsGlobal = include GROOVY_MENU_DIR . 'includes/config/ConfigGlobal.php';
+					$this->optionsGlobal = include GROOVY_MENU_DIR . 'includes' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ConfigGlobal.php';
 					\GroovyMenu\StyleStorage::getInstance()->set_global_config( $this->optionsGlobal );
 				}
 			}
 
-			$this->options = include GROOVY_MENU_DIR . 'includes/config/Config.php';
+			$this->options = include GROOVY_MENU_DIR . 'includes' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'Config.php';
 			\GroovyMenu\StyleStorage::getInstance()->set_preset_config( $this->options );
 
 			$preset = GroovyMenuPreset::getById( $presetId );
@@ -575,8 +575,13 @@ if ( ! class_exists( 'GroovyMenuStyle' ) ) {
 							$data = '';
 							global $wp_filesystem;
 							if ( empty( $wp_filesystem ) ) {
-								if ( file_exists( ABSPATH . '/wp-admin/includes/file.php' ) ) {
-									require_once ABSPATH . '/wp-admin/includes/file.php';
+								$file_path = str_replace( array(
+									'\\',
+									'/'
+								), DIRECTORY_SEPARATOR, ABSPATH . '/wp-admin/includes/file.php' );
+
+								if ( file_exists( $file_path ) ) {
+									require_once $file_path;
 									WP_Filesystem();
 								}
 							}
@@ -621,8 +626,13 @@ if ( ! class_exists( 'GroovyMenuStyle' ) ) {
 							$data = '';
 							global $wp_filesystem;
 							if ( empty( $wp_filesystem ) ) {
-								if ( file_exists( ABSPATH . '/wp-admin/includes/file.php' ) ) {
-									require_once ABSPATH . '/wp-admin/includes/file.php';
+								$file_path = str_replace( array(
+									'\\',
+									'/'
+								), DIRECTORY_SEPARATOR, ABSPATH . '/wp-admin/includes/file.php' );
+
+								if ( file_exists( $file_path ) ) {
+									require_once $file_path;
 									WP_Filesystem();
 								}
 							}
@@ -860,6 +870,14 @@ if ( ! class_exists( 'GroovyMenuStyle' ) ) {
 
 			unset( $preset_settings['compiled_css'] );
 			unset( $preset_settings['compiled_css_rtl'] );
+
+			if (
+				isset( $preset_settings['header']['style'] ) &&
+				2 === $preset_settings['header']['style'] &&
+				! empty( $preset_settings['minimalistic_menu_fullscreen'] )
+			) {
+				$preset_settings['scrollbar_enable'] = true;
+			}
 
 			$preset_settings = wp_json_encode( $preset_settings );
 			$preset_key      = md5( rand() . uniqid() . time() );

@@ -1,6 +1,6 @@
 /* rtl:begin:ignore */
 
-@import '../../node_modules/font-awesome/scss/font-awesome';
+//@import '../../node_modules/font-awesome/scss/font-awesome';
 @import '../../node_modules/perfect-scrollbar/css/perfect-scrollbar';
 
 /* rtl:end:ignore */
@@ -10,7 +10,6 @@
 @import 'frontend/helpers';
 @import 'frontend/navigation-drawer';
 @import 'frontend/general';
-@import 'shared/crane-font';
 @import 'frontend/toolbar';
 @import 'frontend/search';
 @import 'frontend/minicart';
@@ -21,3 +20,4 @@
 @import 'frontend/menu';
 @import 'frontend/perfect-scrollbar';
 @import 'frontend/common';
+@import 'frontend/hamburgers';

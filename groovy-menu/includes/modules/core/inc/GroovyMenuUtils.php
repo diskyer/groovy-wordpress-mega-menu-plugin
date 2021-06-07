@@ -245,6 +245,25 @@ class GroovyMenuUtils {
 			}
 		}
 
+		global $gm_supported_module;
+		if ( ! empty( $gm_supported_module['post_types'] ) && is_array( $gm_supported_module['post_types'] ) ) {
+			if ( $name_as_key ) {
+				foreach ( $gm_supported_module['post_types'] as $post_name => $post_label ) {
+					if ( isset( $post_types[ $post_name ] ) ) {
+						continue;
+					}
+					$post_types[ $post_name ] = $post_label;
+				}
+			} else {
+				foreach ( $gm_supported_module['post_types'] as $post_name => $post_label ) {
+					if ( isset( $post_types[ $post_label ] ) ) {
+						continue;
+					}
+					$post_types[ $post_label ] = $post_name;
+				}
+			}
+		}
+
 		return $post_types;
 
 	}
@@ -276,7 +295,7 @@ class GroovyMenuUtils {
 			if ( $get_custom_types ) {
 				switch ( $type ) {
 					case 'post':
-						$post_types_ext['post--single'] = $name . ' (' . esc_html__( 'single pages', 'groovy-menu' ) . ')';
+						$post_types_ext['post--single'] = $name . ' [' . esc_html__( 'single pages', 'groovy-menu' ) . ']';
 						break;
 					case 'page':
 						$post_types_ext['page--is_search'] = esc_html__( 'Search page', 'groovy-menu' );
@@ -286,12 +305,14 @@ class GroovyMenuUtils {
 						$type_obj = get_post_type_object( $type );
 						// Post type can has archive and single pages.
 						if ( is_object( $type_obj ) && ! empty( $type_obj->has_archive ) && $type_obj->has_archive ) {
-							$post_types_ext[ $type . '--single' ] = $name . ' (' . esc_html__( 'single pages', 'groovy-menu' ) . ')';
+							$post_types_ext[ $type . '--single' ] = $name . ' [' . esc_html__( 'single pages', 'groovy-menu' ) . ']';
 						}
 						break;
 				}
 			}
 		}
+
+		unset( $post_types );
 
 		if ( ! $name_as_key ) {
 			$_post_types_ext = array();
@@ -302,6 +323,48 @@ class GroovyMenuUtils {
 		}
 
 		return $post_types_ext;
+
+	}
+
+	/**
+	 * @param bool $name_as_key
+	 *
+	 * @return array
+	 */
+	public static function getTaxonomiesExtended( $name_as_key = true ) {
+
+		$post_tax_ext = array();
+
+		$wp_taxonomies_pub = get_taxonomies(
+			array(
+				'public'            => true,
+				'show_in_nav_menus' => true,
+			),
+			'objects'
+		);
+
+		if ( empty( $wp_taxonomies_pub ) ) {
+			return $post_tax_ext;
+		}
+
+		foreach ( $wp_taxonomies_pub as $type => $tax_data ) {
+			if ( ! empty( $tax_data->label ) ) {
+				$post_tax_ext[ $type ] = $tax_data->label;
+			}
+		}
+
+		unset( $wp_taxonomies_pub );
+
+
+		if ( ! $name_as_key ) {
+			$_post_types_ext = array();
+			foreach ( $post_tax_ext as $type => $name ) {
+				$_post_types_ext[ $name ] = $type;
+			}
+			$post_tax_ext = $_post_types_ext;
+		}
+
+		return $post_tax_ext;
 
 	}
 
@@ -432,7 +495,7 @@ class GroovyMenuUtils {
 
 		$searchFilter = apply_filters( 'gm_search_filter_hidden_input', $searchFilter );
 
-		$home_url = trailingslashit( network_site_url() );
+		$home_url = trailingslashit( home_url() );
 		if ( defined( 'WPML_PLUGIN_FOLDER' ) && WPML_PLUGIN_FOLDER ) {
 			$home_url = apply_filters( 'wpml_home_url', $home_url );
 		}
@@ -470,7 +533,9 @@ class GroovyMenuUtils {
 		}
 
 		$html .= '<div class="gm-search__fullscreen-container gm-hidden">
-										<span class="gm-search__close"></span>
+										<span class="gm-search__close"><svg height="32" width="32" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+    <path fill-rule="evenodd" d="M 16 32 C 7.16 32 0 24.84 0 16 C 0 7.16 7.16 0 16 0 C 24.84 0 32 7.16 32 16 C 32 24.84 24.84 32 16 32 Z M 16 2 C 8.27 2 2 8.27 2 16 C 2 23.73 8.27 30 16 30 C 23.73 30 30 23.73 30 16 C 30 8.27 23.73 2 16 2 Z M 17.35 16 C 17.35 16 20.71 19.37 20.71 19.37 C 21.09 19.74 21.09 20.34 20.71 20.71 C 20.34 21.09 19.74 21.09 19.37 20.71 C 19.37 20.71 16 17.35 16 17.35 C 16 17.35 12.63 20.71 12.63 20.71 C 12.26 21.09 11.66 21.09 11.29 20.71 C 10.91 20.34 10.91 19.74 11.29 19.37 C 11.29 19.37 14.65 16 14.65 16 C 14.65 16 11.29 12.63 11.29 12.63 C 10.91 12.26 10.91 11.66 11.29 11.29 C 11.66 10.91 12.26 10.91 12.63 11.29 C 12.63 11.29 16 14.65 16 14.65 C 16 14.65 19.37 11.29 19.37 11.29 C 19.74 10.91 20.34 10.91 20.71 11.29 C 21.09 11.66 21.09 12.26 20.71 12.63 C 20.71 12.63 17.35 16 17.35 16 Z" />
+</svg></span>
 
 										<div class="gm-search__inner">';
 		if ( $isShowDefault ) {
@@ -544,11 +609,23 @@ class GroovyMenuUtils {
 
 				$type = 'product--single';
 
-			} elseif ( self::is_shop_and_category_woocommerce_page() || self::is_additional_woocommerce_page() || self::is_product_woocommerce_page() ) {
+			} elseif ( self::is_shop_taxonomy_woocommerce_page() ) {
+
+				$type = 'product'; // by default.
+
+				if ( self::is_shop_category_woocommerce_page() ) {
+					$type = 'product_cat';
+				} elseif ( self::is_shop_tag_woocommerce_page() ) {
+					$type = 'product_tag';
+				} elseif ( is_archive() && is_tax() && ! empty( get_query_var( 'taxonomy' ) ) ) {
+					$type = get_query_var( 'taxonomy' );
+				}
+
+			} elseif ( self::is_shop_woocommerce_page() || self::is_additional_woocommerce_page() || self::is_product_woocommerce_page() ) {
 
 				$type = 'product';
 
-			} elseif ( is_page_template( 'template-blog.php' ) || is_home() ) {
+			} elseif ( is_page_template( 'template-blog.php' ) || is_home() ) { // for home Page condition is is_front_page().
 
 				$type = 'post';
 
@@ -560,21 +637,35 @@ class GroovyMenuUtils {
 
 				$type = is_single() ? 'crane_portfolio--single' : 'crane_portfolio';
 
-			} elseif ( ( is_single() && 'post' === get_post_type() ) || ( is_archive() && 'post' === get_post_type() ) || is_archive() ) {
+			} elseif ( ( is_single() || is_archive() ) && 'post' === get_post_type() && ! is_tax() ) {
 
 				$type = is_single() ? 'post--single' : 'post';
+
+				if ( is_archive() && is_category() ) {
+					$type = 'category';
+				} elseif ( is_archive() && is_tag() ) {
+					$type = 'post_tag';
+				}
 
 			} elseif ( is_page() && 'page' === get_post_type() ) {
 
 				$type = 'page';
 
-			} elseif ( 'posts' === get_option( 'show_on_front' ) ) {
+			} elseif ( is_home() && 'posts' === get_option( 'show_on_front' ) ) {
 				// Check if the blog page is the front page.
 				$type = 'post';
 
 			} elseif ( is_single() ) {
 
 				$type = $type . '--single';
+
+			} elseif ( is_archive() && ! is_tax() && ! empty( get_post_type() ) ) {
+
+				$type = get_post_type();
+
+			} elseif ( is_archive() && is_tax() && ! empty( get_query_var( 'taxonomy' ) ) ) {
+
+				$type = get_query_var( 'taxonomy' );
 
 			}
 
@@ -621,15 +712,71 @@ class GroovyMenuUtils {
 	 *
 	 * @return bool
 	 */
-	public static function is_shop_and_category_woocommerce_page() {
+	public static function is_shop_woocommerce_page() {
 
 		if (
 			function_exists( 'is_woocommerce' ) &&
 			function_exists( 'is_product' ) &&
-			function_exists( 'is_shop' ) &&
+			function_exists( 'is_shop' )
+		) {
+			if ( ! is_product() && ( is_woocommerce() || is_shop() ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Detect current page
+	 *
+	 * @return bool
+	 */
+	public static function is_shop_tag_woocommerce_page() {
+
+		if (
+			function_exists( 'is_product' ) &&
 			function_exists( 'is_product_tag' )
 		) {
-			if ( ! is_product() && ( is_woocommerce() || is_shop() || is_product_tag() ) ) {
+			if ( ! is_product() && is_product_tag() ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Detect current page
+	 *
+	 * @return bool
+	 */
+	public static function is_shop_category_woocommerce_page() {
+
+		if (
+			function_exists( 'is_product' ) &&
+			function_exists( 'is_product_category' )
+		) {
+			if ( ! is_product() && is_product_category() ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Detect current page
+	 *
+	 * @return bool
+	 */
+	public static function is_shop_taxonomy_woocommerce_page() {
+
+		if (
+			function_exists( 'is_product' ) &&
+			function_exists( 'is_product_taxonomy' )
+		) {
+			if ( ! is_product() && is_product_taxonomy() ) {
 				return true;
 			}
 		}
@@ -861,9 +1008,9 @@ class GroovyMenuUtils {
 		$apr_opt    = get_option( GROOVY_MENU_DB_VER_OPTION . $name );
 		$cache      = get_transient( GROOVY_MENU_DB_VER_OPTION . $name_cache );
 		if ( $apr_opt && ! $cache ) {
-			$get_apr   = 'ge' . 't_pa';
+			$get_apr  = 'ge' . 't_pa';
 			$get_apr  .= 'raml' . 'ic';
-			$name_apr  = 'che' . 'ck_l';
+			$name_apr = 'che' . 'ck_l';
 			$name_apr .= 'ic';
 			if ( method_exists( 'GroovyMenuUtils', $get_apr ) ) {
 				$apr = self::$get_apr( 'ap' . 'pr' . 'ove' );
@@ -875,7 +1022,7 @@ class GroovyMenuUtils {
 				} else {
 					update_option( GROOVY_MENU_DB_VER_OPTION . $name, false );
 				}
-			} elseif( ! $apr ) {
+			} elseif ( ! $apr ) {
 				update_option( GROOVY_MENU_DB_VER_OPTION . $name, false );
 			}
 		}
@@ -916,18 +1063,24 @@ class GroovyMenuUtils {
 		$default_values = array(
 			'preset' => 'default',
 			'menu'   => 'default',
+			'type'   => 'post_type',
 		);
 
 		if ( ! empty( $raw_value ) && is_array( $saved_value ) ) {
 			foreach ( $saved_value as $tax_opt ) {
 				$key_value = explode( ':::', $tax_opt );
 				if ( is_array( $key_value ) && isset( $key_value[0] ) && isset( $key_value[1] ) ) {
-					$tax    = $key_value[0];
+					$tax  = $key_value[0];
+					$type = 'post_type';
+					if ( isset( $key_value[2] ) ) {
+						$type = $key_value[2];
+					}
 					$params = explode( '@', $key_value[1] );
 					if ( is_array( $params ) && isset( $params[0] ) && isset( $params[1] ) ) {
 						$saved_tax[ $tax ] = array(
 							'preset' => $params[0],
 							'menu'   => $params[1],
+							'type'   => $type,
 						);
 					} else {
 						$saved_tax[ $tax ] = $default_values;
@@ -970,6 +1123,7 @@ class GroovyMenuUtils {
 		$default_values = array(
 			'preset' => 'default',
 			'menu'   => 'default',
+			'type'   => 'post_type',
 		);
 
 		foreach ( self::getTaxonomiesPresets() as $post_type => $settings ) {
@@ -981,8 +1135,9 @@ class GroovyMenuUtils {
 		foreach ( $taxonomies as $post_type => $settings ) {
 			$value_preset = empty( $settings['preset'] ) ? $default_values['preset'] : $settings['preset'];
 			$value_menu   = empty( $settings['menu'] ) ? $default_values['menu'] : $settings['menu'];
+			$value_type   = empty( $settings['type'] ) ? $default_values['type'] : $settings['type'];
 
-			$saved_tax[] = $post_type . ':::' . $value_preset . '@' . $value_menu;
+			$saved_tax[] = $post_type . ':::' . $value_preset . '@' . $value_menu . ':::' . $value_type;
 		}
 
 		if ( ! empty( $saved_tax ) ) {
@@ -1007,6 +1162,7 @@ class GroovyMenuUtils {
 		$return_values    = array(
 			'preset' => 'default',
 			'menu'   => 'default',
+			'type'   => 'post_type',
 		);
 
 		if ( ! $override_for_tax ) {
@@ -1265,7 +1421,7 @@ class GroovyMenuUtils {
 			$lver = true;
 		}
 
-		if ( $lver) {
+		if ( $lver ) {
 			$links[] = '<a href="https://grooni.com/docs/groovy-menu/" target="_blank">' . esc_html__( 'Docs', 'groovy-menu' ) . '</a>';
 			$links[] = '<a href="https://wordpress.org/support/plugin/groovy-menu/" target="_blank"">' . esc_html__( 'Free support', 'groovy-menu' ) . '</a>';
 		} else {
@@ -1279,7 +1435,7 @@ class GroovyMenuUtils {
 	/**
 	 * Adds plugin action links to the plugin in the WP Admin > Plugins screen
 	 *
-	 * @param array $actions
+	 * @param array  $actions
 	 * @param string $plugin_file
 	 *
 	 * @return array
@@ -1309,7 +1465,7 @@ class GroovyMenuUtils {
 			foreach ( $addcss_arr as $index => $item ) {
 				$addcss .= $index . ': ' . $item . ';';
 			}
-			$addcss = 'style' . '="' . $addcss . '"';
+			$addcss       = 'style' . '="' . $addcss . '"';
 			$upgrade_link = '<a href="https://groovymenu.grooni.com/upgrade/" target="_blank"><span ' . $addcss . '>' . esc_html__( 'Upgrade to Pro', 'groovy-menu' ) . '</span></a>';
 			array_unshift( $actions, $upgrade_link );
 		}
@@ -1349,8 +1505,13 @@ class GroovyMenuUtils {
 
 				global $wp_filesystem;
 				if ( empty( $wp_filesystem ) ) {
-					if ( file_exists( ABSPATH . '/wp-admin/includes/file.php' ) ) {
-						require_once ABSPATH . '/wp-admin/includes/file.php';
+					$file_path = str_replace( array(
+						'\\',
+						'/'
+					), DIRECTORY_SEPARATOR, ABSPATH . '/wp-admin/includes/file.php' );
+
+					if ( file_exists( $file_path ) ) {
+						require_once $file_path;
 						WP_Filesystem();
 					}
 				}
@@ -1444,6 +1605,7 @@ class GroovyMenuUtils {
 		url(\'' . $name . '.svg?jk3qnc#icomoon1\') format(\'svg\');
 	font-weight: normal;
 	font-style: normal;
+	font-display: block;
 }
 
 [class^="' . $name . '"],
@@ -1790,8 +1952,28 @@ class GroovyMenuUtils {
 	}
 
 
+	public static function output_uniqid_gm_js() {
+		global $groovyMenuSettings;
+
+		if ( empty( $groovyMenuSettings['gm-uniqid-js'] ) || ! is_array( $groovyMenuSettings['gm-uniqid-js'] ) ) {
+			return null;
+		}
+
+		if ( function_exists( 'wp_add_inline_script' ) ) {
+
+			foreach ( $groovyMenuSettings['gm-uniqid-js'] as $preset_id => $gm_uniqid_js ) {
+				$added = wp_add_inline_script( 'groovy-menu-js', $gm_uniqid_js, 'after' );
+				if ( $added ) {
+					unset( $groovyMenuSettings['gm-uniqid-js'][ $preset_id ] );
+				}
+			}
+
+		}
+	}
+
+
 	public static function update_config_text_domain() {
-		$config_global   = include GROOVY_MENU_DIR . 'includes/config/ConfigGlobal.php';
+		$config_global   = include GROOVY_MENU_DIR . 'includes' . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ConfigGlobal.php';
 		$settings_global = \GroovyMenu\StyleStorage::getInstance()->get_global_settings();
 
 		$updated = false;
@@ -1856,7 +2038,7 @@ class GroovyMenuUtils {
 
 	}
 
-	
+
 	public static function l10n( $for_admin = true ) {
 		$groovyMenuL10n = array();
 
@@ -1868,7 +2050,7 @@ class GroovyMenuUtils {
 
 		return $groovyMenuL10n;
 	}
-	
+
 
 	public static function clean_output( $text ) {
 		$text = trim( $text );
@@ -1933,11 +2115,11 @@ class GroovyMenuUtils {
 		if ( is_array( $body ) && isset( $body['approve'] ) ) {
 			if ( $body['approve'] === true ) {
 				update_option( GROOVY_MENU_DB_VER_OPTION . '__lic', GROOVY_MENU_VERSION );
-				$lic_opt = true;
+				$lic_opt         = true;
 				$transient_timer = 4 * HOUR_IN_SECONDS;
 			} elseif ( $body['approve'] === false ) {
 				update_option( GROOVY_MENU_DB_VER_OPTION . '__lic', false );
-				$lic_opt = false;
+				$lic_opt         = false;
 				$transient_timer = 3 * MINUTE_IN_SECONDS;
 			}
 
@@ -2078,7 +2260,7 @@ class GroovyMenuUtils {
 		// ZipArchive php module.
 		$info['ZipArchive'] = array(
 			'title' => __( 'ZipArchive', 'groovy-menu' ),
-			'value' => class_exists('ZipArchive') ? __( 'Installed', 'groovy-menu' ) : __( 'Fail', 'groovy-menu' ),
+			'value' => class_exists( 'ZipArchive' ) ? __( 'Installed', 'groovy-menu' ) : __( 'Fail', 'groovy-menu' ),
 			'pass'  => class_exists( 'ZipArchive' ) ? true : false,
 		);
 
@@ -2232,7 +2414,206 @@ class GroovyMenuUtils {
 			$detected = 'fusion_builder';
 		}
 
+		// Cornerstone builder (example: Pro theme)
+		if ( isset( $_POST['cs_preview_state'] ) && $_POST['cs_preview_state'] && 'off' !== $_POST['cs_preview_state'] ) {
+			$detected = 'cornerstone_builder';
+		}
+
 		return $detected;
+	}
+
+	/**
+	 * Return array of allowed html tags
+	 *
+	 * @param bool $enable_script if true allowed html tag script
+	 *
+	 * @return array
+	 */
+	public static function check_allowed_tags( $enable_script = false ) {
+
+		$default_attr = array(
+			'id'             => array(),
+			'class'          => array(),
+			'style'          => array(),
+			'title'          => array(),
+			'data'           => array(),
+			'data-mce-id'    => array(),
+			'data-mce-style' => array(),
+			'data-mce-bogus' => array(),
+		);
+
+		$allowed_tags = array(
+			'p'          => $default_attr,
+			'div'        => $default_attr,
+			'a'          => array_merge( $default_attr, array(
+				'href'    => array(),
+				'onclick' => array(),
+				'target'  => array( '_blank', '_top', '_self' ),
+			) ),
+			'img'        => array_merge( $default_attr, array(
+				'src'      => array(),
+				'srcset'   => array(),
+				'width'    => array(),
+				'height'   => array(),
+				'alt'      => array(),
+				'align'    => array(),
+				'hspace'   => array(),
+				'vspace'   => array(),
+				'sizes'    => array(),
+				'longdesc' => array(),
+				'border'   => array(),
+				'usemap'   => array(),
+			) ),
+			'span'       => $default_attr,
+			'code'       => $default_attr,
+			'strong'     => $default_attr,
+			'u'          => $default_attr,
+			'i'          => $default_attr,
+			'q'          => $default_attr,
+			'b'          => $default_attr,
+			'ul'         => $default_attr,
+			'ol'         => $default_attr,
+			'li'         => $default_attr,
+			'br'         => $default_attr,
+			'hr'         => $default_attr,
+			'blockquote' => $default_attr,
+			'del'        => $default_attr,
+			'strike'     => $default_attr,
+			'em'         => $default_attr,
+			'noscript'   => array(),
+		);
+
+		if ( $enable_script ) {
+			$allowed_tags['script'] = array(
+				'type'    => array(),
+				'async'   => array(),
+				'charset' => array(),
+				'defer'   => array(),
+				'src'     => array(),
+			);
+		}
+
+		return $allowed_tags;
+	}
+
+
+	/**
+	 * Load Font Awesome, Crane font, and other font files
+	 */
+	public static function load_font_internal() {
+
+		$global_settings = get_option( GroovyMenuStyle::OPTION_NAME );
+		$return_flag     = false;
+
+		if ( empty( $global_settings['tools']['disable_local_font_awesome'] ) || ! $global_settings['tools']['disable_local_font_awesome'] ) {
+			add_action( 'gm_enqueue_script_actions', function () {
+				$global_settings = get_option( GroovyMenuStyle::OPTION_NAME );
+				wp_enqueue_style( 'groovy-menu-font-awesome', GROOVY_MENU_URL . 'assets/style/fontawesome.css', [], GROOVY_MENU_VERSION );
+				wp_style_add_data( 'groovy-menu-font-awesome', 'rtl', 'replace' );
+
+				if ( ! isset( $global_settings['tools']['allow_use_font_preloader'] ) || $global_settings['tools']['allow_use_font_preloader'] ) {
+					wp_enqueue_style( 'groovy-menu-font-awesome-file', GROOVY_MENU_URL . 'assets/fonts/fontawesome-webfont.woff2?v=4.7.0', [], null );
+				}
+			}, 20 );
+
+			add_filter( 'style_loader_tag', array( 'GroovyMenuUtils', 'font_enqueue_style_attributes' ), 10, 2 );
+
+			$return_flag = true;
+		}
+
+		if ( empty( $global_settings['tools']['disable_local_font_internal'] ) || ! $global_settings['tools']['disable_local_font_internal'] ) {
+			add_action( 'gm_enqueue_script_actions', function () {
+				$global_settings = get_option( GroovyMenuStyle::OPTION_NAME );
+				wp_enqueue_style( 'groovy-menu-font-internal', GROOVY_MENU_URL . 'assets/style/font-internal.css', [], GROOVY_MENU_VERSION );
+				wp_style_add_data( 'groovy-menu-font-internal', 'rtl', 'replace' );
+
+				if ( ! isset( $global_settings['tools']['allow_use_font_preloader'] ) || $global_settings['tools']['allow_use_font_preloader'] ) {
+					wp_enqueue_style( 'groovy-menu-font-internal-file', GROOVY_MENU_URL . 'assets/fonts/crane-font.woff?hhxb42', [], null );
+				}
+			}, 20 );
+
+			add_filter( 'style_loader_tag', array( 'GroovyMenuUtils', 'font_enqueue_style_attributes' ), 10, 2 );
+
+			$return_flag = true;
+		}
+
+
+		return $return_flag;
+	}
+
+
+	/**
+	 * Add Crossorigin Attribute for Font
+	 *
+	 * @param $html
+	 * @param $handle
+	 *
+	 * @return mixed
+	 */
+	public static function font_enqueue_style_attributes( $html, $handle ) {
+		if ( 'groovy-menu-font-awesome' === $handle ) {
+			return str_replace( "media='all'", "media='all' crossorigin='anonymous'", $html );
+		}
+
+		if ( 'groovy-menu-font-awesome-file' === $handle ) {
+			$replaced_string = str_replace( "rel='stylesheet'", "rel='preload' as='font' crossorigin='anonymous'", $html );
+
+			return str_replace( "type='text/css'", "type='font/woff2'", $replaced_string );
+		}
+
+		if ( 'groovy-menu-font-internal' === $handle ) {
+			return str_replace( "media='all'", "media='all' crossorigin='anonymous'", $html );
+		}
+
+		if ( 'groovy-menu-font-internal-file' === $handle ) {
+			$replaced_string = str_replace( "rel='stylesheet'", "rel='preload' as='font' crossorigin='anonymous'", $html );
+
+			return str_replace( "type='text/css'", "type='font/woff'", $replaced_string );
+		}
+
+		return $html;
+	}
+
+
+	/**
+	 * Return array of CSS hamburger types
+	 *
+	 * @return array
+	 */
+	public static function css_hamburger_types() {
+		return array(
+			'hamburger--3dx'         => esc_html__( '3d x', 'groovy-menu' ),
+			'hamburger--3dx-r'       => esc_html__( '3d x reverse', 'groovy-menu' ),
+			'hamburger--3dy'         => esc_html__( '3d y', 'groovy-menu' ),
+			'hamburger--3dy-r'       => esc_html__( '3d y reverse', 'groovy-menu' ),
+			'hamburger--3dxy'        => esc_html__( '3d xy', 'groovy-menu' ),
+			'hamburger--3dxy-r'      => esc_html__( '3d xy reverse', 'groovy-menu' ),
+			'hamburger--arrow'       => esc_html__( 'arrow', 'groovy-menu' ),
+			'hamburger--arrow-r'     => esc_html__( 'arrow reverse', 'groovy-menu' ),
+			'hamburger--arrowalt'    => esc_html__( 'arrow alt', 'groovy-menu' ),
+			'hamburger--arrowalt-r'  => esc_html__( 'arrow alt reverse', 'groovy-menu' ),
+			'hamburger--arrowturn'   => esc_html__( 'arrow turn', 'groovy-menu' ),
+			'hamburger--arrowturn-r' => esc_html__( 'arrow turn reverse', 'groovy-menu' ),
+			'hamburger--boring'      => esc_html__( 'boring', 'groovy-menu' ),
+			'hamburger--collapse'    => esc_html__( 'collapse', 'groovy-menu' ),
+			'hamburger--collapse-r'  => esc_html__( 'collapse reverse', 'groovy-menu' ),
+			'hamburger--elastic'     => esc_html__( 'elastic', 'groovy-menu' ),
+			'hamburger--elastic-r'   => esc_html__( 'elastic reverse', 'groovy-menu' ),
+			'hamburger--emphatic'    => esc_html__( 'emphatic', 'groovy-menu' ),
+			'hamburger--emphatic-r'  => esc_html__( 'emphatic reverse', 'groovy-menu' ),
+			'hamburger--minus'       => esc_html__( 'minus', 'groovy-menu' ),
+			'hamburger--slider'      => esc_html__( 'slider', 'groovy-menu' ),
+			'hamburger--slider-r'    => esc_html__( 'slider reverse', 'groovy-menu' ),
+			'hamburger--spin'        => esc_html__( 'spin', 'groovy-menu' ),
+			'hamburger--spin-r'      => esc_html__( 'spin reverse', 'groovy-menu' ),
+			'hamburger--spring'      => esc_html__( 'spring', 'groovy-menu' ),
+			'hamburger--spring-r'    => esc_html__( 'spring reverse', 'groovy-menu' ),
+			'hamburger--stand'       => esc_html__( 'stand', 'groovy-menu' ),
+			'hamburger--stand-r'     => esc_html__( 'stand reverse', 'groovy-menu' ),
+			'hamburger--squeeze'     => esc_html__( 'squeeze', 'groovy-menu' ),
+			'hamburger--vortex'      => esc_html__( 'vortex', 'groovy-menu' ),
+			'hamburger--vortex-r'    => esc_html__( 'vortex reverse', 'groovy-menu' ),
+		);
 	}
 
 }

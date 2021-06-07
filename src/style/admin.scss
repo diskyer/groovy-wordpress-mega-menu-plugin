@@ -1,7 +1,7 @@
 @import '../../node_modules/tingle.js/dist/tingle';
 @import '../../node_modules/font-awesome/scss/font-awesome';
 @import '../../node_modules/choices.js/public/assets/styles/choices';
-@import '../../node_modules/@simonwep/pickr/src/scss/pickr';
+@import '../../node_modules/@simonwep/pickr/src/scss/themes/monolith.scss';
 @import 'admin/colorpicker';
 @import 'admin/modal';
 @import 'shared/crane-font';
@@ -10,4 +10,3 @@
 @import 'admin/integration';
 @import 'admin/appearance';
 @import 'admin/debug-page';
-@import 'admin/badge';

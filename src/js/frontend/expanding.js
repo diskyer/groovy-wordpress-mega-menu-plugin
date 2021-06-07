@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 var options;
 var navbar;
-var hamburgerMenu;
+var hamburgerMenuExpanded;
 
 let expandingIsOpen = function (navbar) {
   let isOpen;
@@ -20,11 +20,35 @@ function expandingOpen(navbar) {
     navbar.classList.add('gm-expanding--open');
 
   }
+
+  let miliSeconds =
+    (options.sidebarExpandingMenuAnimationDuration) ? parseInt(options.sidebarExpandingMenuAnimationDuration) : 300;
+
+  setTimeout(() => {
+    navbar.classList.add('gm-animation-end');
+  }, miliSeconds + 20);
+
+  if (hamburgerMenuExpanded) {
+    setTimeout(() => {
+      hamburgerMenuExpanded.classList.add('is-active');
+    }, miliSeconds + 20);
+  }
 }
 
 function expandingClose(navbar) {
+
+  let miliSeconds =
+    (options.sidebarExpandingMenuAnimationDuration) ? parseInt(options.sidebarExpandingMenuAnimationDuration) : 300;
+
+  if (hamburgerMenuExpanded) {
+    setTimeout(() => {
+      hamburgerMenuExpanded.classList.remove('is-active');
+    }, miliSeconds + 20);
+  }
+
   if (expandingIsOpen(navbar)) {
     navbar.classList.remove('gm-expanding--open');
+    navbar.classList.remove('gm-animation-end');
   } else {
     return;
   }
@@ -58,6 +82,27 @@ function expandingClickHamburger() {
   });
 }
 
+function transitionSidebarEvents() {
+  const navbar = document.querySelector('.gm-navbar');
+
+  if (navbar) {
+    navbar.addEventListener('transitionend', handleTransitionEnd);
+  }
+}
+
+function handleTransitionEnd(event) {
+  if (event.propertyName !== 'width') {
+    return;
+  }
+
+  if (event.target.classList.contains('gm-expanding--open')) {
+    event.target.classList.add('gm-animation-end');
+  } else {
+    event.target.classList.remove('gm-animation-end');
+  }
+
+}
+
 function expandingOpenMouseEvents() {
   navbar.addEventListener('mouseenter', function (event) {
     expandingOpen(navbar);
@@ -75,6 +120,11 @@ export function expandingSidebarEvents() {
     return;
   }
 
+  let hamburgerMenuExpandedType = (options.sidebarExpandingMenuCssHamburgerType) ? options.sidebarExpandingMenuCssHamburgerType : 'hamburger--squeeze';
+  if (hamburgerMenuExpanded) {
+    hamburgerMenuExpanded.classList.add(hamburgerMenuExpandedType);
+  }
+
   if (options.sidebarExpandingMenuOpenOnHover) {
     expandingOpenMouseEvents();
   }
@@ -82,6 +132,8 @@ export function expandingSidebarEvents() {
   expandingClickOutside();
 
   expandingClickHamburger();
+
+  transitionSidebarEvents();
 
   window.addEventListener('resize', _.debounce(() => {
     expandingClose(navbar);
@@ -92,5 +144,5 @@ export function expandingSidebarEvents() {
 export function initExpanding(args) {
   options = args.options;
   navbar = args.navbar;
-  hamburgerMenu = args.hamburgerMenu;
+  hamburgerMenuExpanded = args.hamburgerMenuExpanded;
 }

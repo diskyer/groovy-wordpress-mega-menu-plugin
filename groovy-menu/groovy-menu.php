@@ -1,7 +1,7 @@
 <?php defined( 'ABSPATH' ) || die( 'This script cannot be accessed directly.' );
 /*
 Plugin Name: Groovy Menu (free)
-Version: 1.2.2
+Version: 1.2.16
 Description: Groovy menu is a modern adjustable and flexible menu designed for creating mobile-friendly menus with a lot of options.
 Plugin URI: https://groovymenu.grooni.com/
 Author: Grooni.com
@@ -31,7 +31,7 @@ if ( ! defined( 'GROOVY_MENU_LVER' ) ) {
 	return;
 }
 
-define( 'GROOVY_MENU_VERSION', '1.2.2' );
+define( 'GROOVY_MENU_VERSION', '1.2.16' );
 define( 'GROOVY_MENU_DB_VER_OPTION', 'groovy_menu_db_version' );
 define( 'GROOVY_MENU_DIR', plugin_dir_path( __FILE__ ) );
 define( 'GROOVY_MENU_URL', plugin_dir_url( __FILE__ ) );
@@ -52,7 +52,8 @@ if ( ! $db_version || version_compare( $db_version, '2.0.0', '<' ) ) {
 global $gm_supported_module;
 $gm_supported_module = array(
 	'theme'      => wp_get_theme()->get_template(),
-	'post_types' => array(),
+	'post_types' => empty( $gm_supported_module['post_types'] ) ? array() : $gm_supported_module['post_types'],
+	'categories' => empty( $gm_supported_module['categories'] ) ? array() : $gm_supported_module['categories'],
 	'activate'   => array(),
 	'deactivate' => array(),
 	'db_version' => $db_version,
@@ -60,7 +61,7 @@ $gm_supported_module = array(
 
 
 // Autoload modules and classes by composer.
-require_once GROOVY_MENU_DIR . 'vendor/autoload.php';
+require_once GROOVY_MENU_DIR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 
 if ( version_compare( PHP_VERSION, '7.0.0', '<' ) && class_exists( 'GroovyMenuUtils' ) && method_exists( 'GroovyMenuUtils', 'show_gm_php_version' ) ) {
 	add_action( 'admin_notices', array( 'GroovyMenuUtils', 'show_gm_php_version' ), 7 );
@@ -74,26 +75,29 @@ add_action( 'init', array( 'GroovyMenuUtils', 'add_groovy_menu_preset_post_type'
 add_filter( 'plugin_row_meta', array( 'GroovyMenuUtils', 'gm_plugin_meta_links' ), 10, 2 );
 add_filter( 'plugin_action_links', array( 'GroovyMenuUtils', 'gm_plugin_page_links' ), 10, 2 );
 
+add_action( 'init', 'groovy_menu_init_classes', 2 );
 
 // Initialize Groovy Menu.
-if ( class_exists( 'GroovyMenuPreset' ) ) {
-	new GroovyMenuPreset( null, true );
-}
+function groovy_menu_init_classes() {
+	if ( class_exists( 'GroovyMenuPreset' ) ) {
+		new GroovyMenuPreset( null, true );
+	}
 
-if ( class_exists( 'GroovyMenuSettings' ) ) {
-	new GroovyMenuSettings();
-}
+	if ( class_exists( 'GroovyMenuSettings' ) ) {
+		new GroovyMenuSettings();
+	}
 
-if ( class_exists( 'GroovyMenuCategoryPreset' ) ) {
-	new GroovyMenuCategoryPreset( array( 'category', 'crane_portfolio_cats', 'post_tag', 'product_cat' ) );
-}
+	if ( class_exists( 'GroovyMenuCategoryPreset' ) ) {
+		new GroovyMenuCategoryPreset();
+	}
 
-if ( class_exists( 'GroovyMenuSingleMetaPreset' ) ) {
-	new GroovyMenuSingleMetaPreset();
-}
+	if ( class_exists( 'GroovyMenuSingleMetaPreset' ) ) {
+		new GroovyMenuSingleMetaPreset();
+	}
 
-if ( class_exists( '\GroovyMenu\AdminWalker' ) ) {
-	\GroovyMenu\AdminWalker::registerWalker();
+	if ( class_exists( '\GroovyMenu\AdminWalker' ) ) {
+		\GroovyMenu\AdminWalker::registerWalker();
+	}
 }
 
 if ( method_exists( 'GroovyMenuUtils', 'cache_pre_wp_nav_menu' ) ) {
@@ -110,6 +114,15 @@ if ( method_exists( 'GroovyMenuUtils', 'install_default_icon_packs' ) ) {
 
 if ( method_exists( 'GroovyMenuUtils', 'update_config_text_domain' ) && is_admin() ) {
 	add_action( 'wp_loaded', array( 'GroovyMenuUtils', 'update_config_text_domain' ), 1000 );
+}
+
+if ( method_exists( 'GroovyMenuUtils', 'output_uniqid_gm_js' ) ) {
+	add_action( 'gm_enqueue_script_actions', array( 'GroovyMenuUtils', 'output_uniqid_gm_js' ), 999 );
+	add_action( 'gm_after_main_header', array( 'GroovyMenuUtils', 'output_uniqid_gm_js' ), 999 );
+}
+
+if ( method_exists( 'GroovyMenuUtils', 'load_font_internal' ) ) {
+	GroovyMenuUtils::load_font_internal();
 }
 
 function groovy_menu_activation() {
@@ -378,17 +391,38 @@ function groovy_menu_js_request( $uniqid, $return_string = false ) {
 		unset( $groovyMenuSettings_json['nav_menu_data'] );
 	}
 
-	// TODO check 'var groovyMenuSettings = ...' for poly GM blocks
-	$additional_js = 'var groovyMenuSettings = ' . wp_json_encode( $groovyMenuSettings ) . '; document.addEventListener("DOMContentLoaded", function () {  var gm = new GroovyMenu(\'#' . $uniqid . '\' ,groovyMenuSettings); gm.init();});';
+	$preset_id = isset( $groovyMenuSettings['preset']['id'] ) ? $groovyMenuSettings['preset']['id'] : 'default';
+
+	if ( ! empty( $groovyMenuSettings['gm-uniqid'][ $preset_id ] ) && $groovyMenuSettings['gm-uniqid'][ $preset_id ] === $uniqid ) {
+		return '';
+	}
+
+	$groovyMenuSettings['gm-uniqid'][ $preset_id ] = $uniqid;
+
+	$additional_js      = '';
+	$additional_js_var  = 'var groovyMenuSettings = ' . wp_json_encode( $groovyMenuSettings_json ) . ';';
+	$additional_js_init = '
+document.addEventListener("DOMContentLoaded", function () {
+	let gmNavNode = document.querySelector(\'.gm-preset-id-' . $preset_id . '\');
+	if (gmNavNode) {
+		if ( ! gmNavNode.classList.contains(\'gm-init-done\')) {
+			var gm = new GroovyMenu(gmNavNode ,groovyMenuSettings); gm.init();
+		}
+	}
+});';
+
+	$additional_js .= apply_filters( 'groovy_menu_additional_js_front__var', $additional_js_var, $groovyMenuSettings_json );
+	$additional_js .= apply_filters( 'groovy_menu_additional_js_front__init', $additional_js_init, $preset_id );
 
 	if ( $return_string ) {
 		$tag_name = 'script';
 
 		return "\n" . '<' . esc_attr( $tag_name ) . '>' . $additional_js . '</' . esc_attr( $tag_name ) . '>';
 	} else {
-		if ( function_exists( 'wp_add_inline_script' ) ) {
-			wp_add_inline_script( 'groovy-menu-js', $additional_js );
-		}
+
+		// Then work with GroovyMenuUtils::output_uniqid_gm_js .
+		$groovyMenuSettings['gm-uniqid-js'][ $preset_id ] = $additional_js;
+
 	}
 
 	return '';
@@ -449,7 +483,7 @@ if ( ! function_exists( 'groovy_menu_scripts_admin' ) ) {
 
 		// For any admin page.
 		wp_enqueue_style( 'groovy-css-admin-menu', GROOVY_MENU_URL . 'assets/style/admin-common.css', [], GROOVY_MENU_VERSION );
-		wp_enqueue_script( 'groovy-js-admin', GROOVY_MENU_URL . 'assets/js/admin.js', [ 'jquery', 'wp-color-picker' ], GROOVY_MENU_VERSION, true );
+		wp_enqueue_script( 'groovy-js-admin', GROOVY_MENU_URL . 'assets/js/admin.js', [], GROOVY_MENU_VERSION, true );
 
 		// Only Welcome page.
 		if ( in_array( $hook_suffix, array(
@@ -465,6 +499,7 @@ if ( ! function_exists( 'groovy_menu_scripts_admin' ) ) {
 				'groovy-menu_page_groovy_menu_integration',
 				'toplevel_page_groovy_menu_integration'
 			), true ) && ! isset( $_GET['action'] ) ) {
+			wp_enqueue_script( 'groovy-menu-js-dashboard', GROOVY_MENU_URL . 'assets/js/dashboard.js', array(), GROOVY_MENU_VERSION, true );
 			wp_enqueue_script( 'groovy-menu-js-integration', GROOVY_MENU_URL . 'assets/js/integration.js', array(), GROOVY_MENU_VERSION, true );
 			wp_enqueue_style( 'groovy-menu-style-font-roboto', 'https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap', array(), GROOVY_MENU_VERSION );
 			wp_enqueue_style( 'groovy-menu-style-welcome', GROOVY_MENU_URL . 'assets/style/welcome.css', array(), GROOVY_MENU_VERSION );
@@ -491,12 +526,12 @@ if ( ! function_exists( 'groovy_menu_scripts_admin' ) ) {
 		// Only Appearance > Menus page.
 		if ( 'nav-menus.php' === $hook_suffix ) {
 			wp_enqueue_media();
-			wp_enqueue_script( 'groovy-menu-js-appearance', GROOVY_MENU_URL . 'assets/js/appearance.js', [ 'jquery', 'wp-color-picker' ], GROOVY_MENU_VERSION, true );
+			wp_enqueue_script( 'groovy-menu-js-appearance', GROOVY_MENU_URL . 'assets/js/appearance.js', [], GROOVY_MENU_VERSION, true );
 		}
 
 		// Only Debug page.
 		if ( 'tools_page_groovy_menu_debug_page' === $hook_suffix ) {
-			wp_enqueue_script( 'groovy-menu-js-appearance', GROOVY_MENU_URL . 'assets/js/debug.js', [ 'jquery' ], GROOVY_MENU_VERSION, true );
+			wp_enqueue_script( 'groovy-menu-js-appearance', GROOVY_MENU_URL . 'assets/js/debug.js', [], GROOVY_MENU_VERSION, true );
 		}
 
 		$allow_pages = array(
@@ -530,6 +565,15 @@ if ( ! function_exists( 'groovy_menu_scripts_admin' ) ) {
 			foreach ( \GroovyMenu\FieldIcons::getFonts() as $name => $icon ) {
 				wp_enqueue_style( 'groovy-menu-style-fonts-' . $name, GroovyMenuUtils::getUploadUri() . 'fonts/' . $name . '.css', [], GROOVY_MENU_VERSION );
 			}
+
+
+			/**
+			 * Fires when enqueue_script admin for Groovy Menu
+			 *
+			 * @since 1.2.6
+			 */
+			do_action( 'gm_enqueue_script_admin_actions' );
+
 		}
 
 	}

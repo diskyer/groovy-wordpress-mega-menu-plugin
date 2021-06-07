@@ -2,9 +2,9 @@
 Contributors: Grooni
 Tags: mega menu, megamenu, navigation, mobile menu, drop down, menu, responsive, responsive menu, sticky menu, vertical menu, horizontal menu, ajax cart
 Requires at least: 4.9.7
-Tested up to: 5.4.2
+Tested up to: 5.7
 Requires PHP: 7.0
-Stable tag: 1.2.2
+Stable tag: 1.2.16
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.en.html
 
@@ -115,6 +115,152 @@ The source code of the plugin can be found at [GitHub](https://github.com/grooni
 5. Mega menu with menu blocks.
 
 == Changelog ==
+
+= 1.2.16 =
+* Improve:  Possibility of correct interpretation of special characters ("\n", "\r", "\t", "\f", "\b") for outputting custom content added in "Groovy Menu > Custom code".
+* Add: Added three new Actions:
+  - Custom mobile menu open trigger: gm_custom_mobile_hamburger
+  - Before hamburger icon: gm_before_mobile_hamburger
+  - After hamburger icon: gm_after_mobile_hamburger
+  You can insert custom shortcodes or raw HTML in these areas. Read more in Manual.
+* Add: Added additional link color settings if "Top level menu background color when submenu (s) are opened" is enabled.
+* Add: Scroll speed setting for "Internal submenus scrollbar".
+* Fix: Fixed visual lags with enabled setting "Animate from bottom" when the dropdown container is greater than the screen height.
+* Fix: Fixed style issues with additional Toolbar menu, which appeared when working with Divi Builder.
+* Fix: For mega menu menus with large height size fixed a bug with calculating the page height on initial load.
+* Fix: Fixed bug when for top-level menu were assigned the "Mega Menu" and "Mega menu background image" the image was displayed even if the "Mega Menu" setting was already disabled for this menu item.
+
+= 1.2.15 =
+* Improve: Submenu appearance style for minimalistic menu type.
+* Add: New feature that allows to add an additional menu to the toolbar. Placed in section of "General > Toolbar Menu".
+* Add: New setting "Align toolbar to the center".
+
+= 1.2.14 =
+* Improve: Hamburger behavior and settings.
+* Add: New hover style "Fade in" to submenu hover style.
+* Add: New settings "Prevent auto closing of the mobile menu". Is prevent automatically closing of the mobile menu when scrolling, resizing the page or tapping outside the menu area.
+* Fix: Prevent opening a menu item with a dropdown link at first click for mobile menu.
+* Fix: Small fix of the animation for "Minimalistic menu open type > Slide menu and container".
+
+= 1.2.13 =
+* Improve: The code of Groovy Menu has been optimized to work with large menus.
+* Add: New setting for nav-menu item "Mega menu dropdown custom width". Is apply for container of menu.
+* Add: New setting for nav-menu item "Set position of Menu block dropdown as aligned from the start of top level menu item". Is apply for container of menu.
+* Add: New setting for nav-menu item "Frozen link". Disabled opening link at click, other features remains working.
+* Add: New setting for Mega Menu "Highlight the titles of the megamenu on hover state and active". It's apply for mega menu titles that contain links. Highlight the title with colors according to the settings as for usual menu items.
+* Add: Added Fullscreen menu type, the settings are placed in Minimalistic menu section.
+* Add: New feature is added "Page overlay when menu drops down".
+* Add: Added new drop drown appearance style - "Slide from left / right".
+* Add: New WordPress filter for the ability to dynamically change the Logo image.
+* Add: Added new setting "Enable to handle anchor links for 'Menu blocks' content", placed in "General -> Scrollbar & One page" section. Is allow to enable anchor links in "Menu blocks" and smooth scroll.
+* Fix: Improved style compatibility for some themes with CSS Reset.
+* Fix: The bug that prevents the Groovy Menu normal working when using several plugins for minify JS code and caching site pages has been fixed.
+* Fix: Changed JS preset initialization method. It can prevent an error that occurs in rare cases with complex integrations.
+* Fix: Add ID prefix for mobile nav-menu items. Prevent "The ID is not unique" issue.
+* Fix: Issue with arise horizontal scroll when enabled setting "Mega menu container wide" in case integration inside builder such as Divi builder.
+
+= 1.2.12 =
+* Improve: Hover effect of menu item now occur only for the last item in the chain in multi-level menus.
+* Add: Added "Forced centered logo" setting for menu types with center logo.
+* Fix: Prevent double initialization for JavaScript from Groovy Menu. Such a case could have been with custom integration.
+* Fix: Fixed a bug with the appearance of a scrollbar in dropdowns where it should not be.
+* Fix: Fixed small CLS offset for dropdown content when the "Submenu appearance style - Animate from bottom" & "Enable internal submenus scrollbar" preset settings are enabled.
+* Fix: Fixed an issue with "Ensure text remains visible during webfont load" by Google PageSpeed Insights version for Groovy Menu icon fonts. You need to reinstall icon fonts in "Groovy Menu dashboard > Global settings > Icon Packs".
+* Fix: The bug with loading media files in "Global Settings" via the Integration page has been fixed.
+* Fix: Fixed integration with the Divi theme, fixed some style conflicts.
+* Fix: Fixed bug with automatic closing opened dropdown menus that is occurring in some cases.
+* Fix: The bug that prevented the installation of Groovy Menu on a site running Microsoft-IIS has been fixed.
+* Fix: Added styles for WPML selector, which is embedded in the side area.
+* Fix: Added reset CSS styles to prevent style conflicts with some themes.
+
+= 1.2.11 =
+* Fix: Active color links for page ancestor. Includes child pages for parent menu items presented in the nav menu.
+* Fix: Colorpicker located in the settings window of the menu item in "Appearance > Menu".
+* Fix: Characters from the extended UNICODE table for text badges are allowed.
+
+= 1.2.10 =
+* Improve: "Slider opening style"  for mobile menu has been optimized.Reduced the number of JavaScript calculations required for this type of menu to work.
+* Add: An added new feature that improves works of dropdowns on IPad. Now single tap can open a dropdown for an active main menu item that has a submenu, and itself is a link. And for double-tap will open assigned the link for this menu item.
+* Add: Added the ability to set negative values for "Dropdown gap", "Submenu gap" and "Mega menu gap".
+* Add: New setting "Mega menu links left / right padding" in section General > Mega menu
+* Fix: Fixed URL for the search form to fix an issue that appears on multidomain multisites.
+* Fix: Fixed bug with colorpicker in the preset editor at the Safari browser.
+* Fix: Added an additional check for cases when the $ _SERVER global variable does not contain the "SERVER_NAME" parameter.
+* Fix: Fixed and improved "Animated Hamburger icon". Improved positioning of the Hamburger icon relative to the center of the menu block and sticky menu.
+* Fix: Setting "Icon size" for WooCommerce mini cart icon on the mobile menu.
+* Fix: "Animated Hamburger icon" for the mobile menu correct operating the font size, padding, and colors from the Side icon settings.
+* Fix: Some fixes in UI styles in the Groovy Menu Dashboard.
+* Fix: Fixed re-initialization of the Sticky menu on the mobile resolutions at changing the height of the browser window.
+* Fix: Increased time spacing for (debounce) to trigger the scroll handler and resize the browser window. This reduces the overall load on the browser during speed navigation with large graphic content inside the menu.
+* Fix: The setting "Letter Spacing" for menu items inside the Mega menu has been fixed.
+
+= 1.2.9 =
+* Improve: Updated the pool of JavaScript libraries included in the Groovy Menu.
+* Add: Added a new setting in the Global setting: "Disable internal Font".
+* Add: Added a new setting in the Global settings: "Allow use preloader for internal fonts". Allows you to speed up the loading of the FontAwesome & Groovy Menu Internal font.
+* Add: Added the ability to display the Groovy Menu using the [groovy_menu] shortcode. This allows you to insert it into almost any widget or Custom HTML block in content editors.
+* Fix: In some rare cases, WP didn't add IDs for menu items. A fix has been made to add these IDs without fail.
+* Fix: Removed HTML inserts for title & description from the global config. In some rare cases on the server side, reading such a config led to bugs with caching the HTML output.
+* Fix: Fixed a compatibility issue when editing Menu Block with Cornerstone builder (X Theme, Pro theme).
+* Fix: Additional check after AJAX to update the number of products in the Woocommerce mini-cart mobile version.
+* Fix: Now are correct working custom empty links in the top level menu toghether with enabled setting opening the sub-menu on mouse click.
+* Fix: Fixed working with the Iconpack at loading and uninstalling the icon font pack in Global settings.
+* Fix: The initialization of the main Groovy Menu modules has been moved to the 'init' action. This avoids conflicts with some third-party plugins, and also allows you to dynamically add new integration capabilities with some themes. (include Zephyr 7.x).
+
+= 1.2.8 =
+* Add: New type of mobile menu with slide effect.
+* Add: An additional option for "Mobile navigation drawer width" is "Dynamic minimum size"
+* Add: Added "Enable mobile menu scrollbar" setting. Is enabled by default.
+* Add: New option for mobile menu type "Slider mobile submenu opening style" - "Mobile submenu title height".
+* Add: New option for mobile menu type "Slider mobile submenu opening style" - "Mobile submenu title background color".
+* Add: Added the ability to implement a custom trigger to open a mobile menu. "Custom mobile menu open trigger".
+* Add: New setting to set the top gap for the mobile menu "Mobile menu top gap".
+* Add: Added new action "gm_mobile_main_menu_top". It allows you to add content to the top of the mobile menu, before the "Mobile menu top gap".
+* Add: Added the new mobile menu open type, with Close "X" icon.
+* Add: Added the ability to set animated Hamburger and close button for mobile menu.
+* Add: Added ability to choice of Navigation menu to display in preview mode.
+* Add: New appearance style "Animate with scaling" in "General - Submenus - Submenu appearance style" section.
+* Add: Custom scroll speed options for onepage menus.
+* Fix: Scrolling at vertical menu in the mobile version.
+* Fix: Canceled some functions for working with page content if the mobile menu is disabled.
+* Fix: Added style which prevents mobile menu folding at scrolling the main content.
+* Fix: Added styles to prevent showing the mobile menu at page is loading.
+* Fix: Now are correct working custom empty links in the top level menu together with enabled setting opening the sub-menu on mouse click.
+* Fix: Fixed working with the Iconpack at loading and uninstalling the icon font pack in Global settings.
+* Fix: The initialization of the main Groovy Menu modules has been moved to the ‘init’ action. This avoids conflicts with some third-party plugins, and also allows you to dynamically add new integration capabilities with some themes. (include Zephyr 7.x).
+
+= 1.2.7 =
+* Add: Ability to add a custom shortcode or HTML to the Action areas of Groovy Menu, direclty in the preset editor. The setting is available in the General preset editor > Custom code.
+* Fix: Fixed a conflict that occurred when some plugins for WooCommerce were working together on Divi product pages and using menu blocks.
+* Fix: Added default styles for displaying items in the mini cart. Prevents style conflicts in some themes.
+* Fix: Added an event to close the mini-cart by clicking outside the mini-cart.
+* Fix: Fixed double transition effect for icons.
+
+= 1.2.6 =
+* Add: Added an option for disable Font Awesome.
+* Improve: Additional features to control for Onepage scroll.
+
+= 1.2.5 =
+* Add: New feature to set border radius for Dropdown menu.
+* Add: New ability to set gap for Dropdown menu, Sub-menu and Mega Menu.
+* Add: Added new setting for menu dividers "Stretch to all menu height".
+* Add: Added settings for choosing colors for search items.
+* Add: Added new settings for the mobile menu. Choosing the position of the logo, dividing lines, icons color.
+* Add: Added new settings for "Submenu box border top color".
+* Improve: Increased dropdown click area at the mobile menu.
+* Improve: All Search settings are moved to their own section.
+* Improve: The section of the "Mobile menu" preset has been reorganized.
+* Fix: Fixed menu items highlighting in case the current single page is included in several taxonomies presented in the menu.
+* Fix: Fixed bug with position of icons in Groovy Menu UI.
+* Fix: Fixed expanding sub-menu for mobile version.
+
+= 1.2.4 =
+* Fix: Fixed RTL issue.
+
+= 1.2.3 =
+* Added: New feature to add any HTML or Shortcode instead of an Icon. For example you can add JSON animated or SVG icons. Configured in "Appearance > Menus".
+* Fix: Improved compatibility with WordPress 5.5. Now plugin backend code is also without jQuery dependency.
+* Fix: Bug with colors for mobile menu links, cart icon and toolbar social buttons on  pages with WooCommerce together with Divi theme.
 
 = 1.2.2 =
 * Added: Added the opportunity to enable scrollbar for Minimalistic menu type.

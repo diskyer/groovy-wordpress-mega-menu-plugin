@@ -5,6 +5,7 @@ global $groovyMenuSettings, $groovyMenuPreview;
 $groovyMenuPreview = true;
 
 $preset_id     = isset( $_GET['id'] ) ? esc_attr( sanitize_text_field( wp_unslash( $_GET['id'] ) ) ) : false; // @codingStandardsIgnoreLine
+$navmenu_id    = isset( $_GET['navmenu_id'] ) ? esc_attr( sanitize_text_field( wp_unslash( $_GET['navmenu_id'] ) ) ) : false; // @codingStandardsIgnoreLine
 $from_action   = isset( $_GET['from'] ) ? esc_attr( sanitize_text_field( wp_unslash( $_GET['from'] ) ) ) : null; // @codingStandardsIgnoreLine
 $rtl_flag      = isset( $_GET['d'] ) ? true : false; // @codingStandardsIgnoreLine
 $preset_params = empty( $_POST['menu'] ) ? array() : $_POST['menu']; // @codingStandardsIgnoreLine
@@ -39,6 +40,11 @@ if ( 'api' === $from_action ) {
 
 }
 
+if ( empty( $navmenu_id ) || ! $navmenu_id || 'default' === $navmenu_id ) {
+	$navmenu_id = GroovyMenuUtils::getDefaultMenu();
+}
+
+
 $serialized_styles                          = $styles->serialize( false, true, true, false );
 $groovyMenuSettings                         = $serialized_styles;
 $groovyMenuSettings['preset']               = array(
@@ -60,6 +66,19 @@ if ( $custom_js ) {
 	$output_custom_media .= "\n" . '<' . esc_attr( $tag_name ) . '>' . $custom_js . '</' . esc_attr( $tag_name ) . '>';
 }
 
+
+if ( class_exists( 'GroovyMenuActions' ) ) {
+	// Do custom shortcodes from preset.
+	GroovyMenuActions::do_preset_shortcodes( $styles );
+
+	if ( 'true' === $groovyMenuSettings['header']['toolbar'] && $groovyMenuSettings['toolbarMenuEnable'] ) {
+		// Do custom shortcodes from preset.
+		GroovyMenuActions::check_toolbar_menu( $styles );
+	}
+
+}
+
+
 // Disable admin bar.
 add_filter( 'show_admin_bar', '__return_false' );
 remove_action( 'wp_head', '_admin_bar_bump_cb' );
@@ -70,7 +89,8 @@ wp_enqueue_style( 'groovy-preview-style', GROOVY_MENU_URL . 'assets/style/' . $s
 wp_enqueue_script( 'groovy-js-preview', GROOVY_MENU_URL . 'assets/js/preview.js', [], GROOVY_MENU_VERSION, true );
 
 
-?><html <?php echo $rtl_flag ? 'dir="rtl"' : ''; ?>>
+?>
+<html <?php echo $rtl_flag ? 'dir="rtl"' : ''; ?>>
 <head>
 	<?php
 
@@ -116,7 +136,7 @@ wp_enqueue_script( 'groovy-js-preview', GROOVY_MENU_URL . 'assets/js/preview.js'
 	echo $output_custom_media ? : '';
 
 	$args = array(
-		'menu'           => GroovyMenuUtils::getDefaultMenu(),
+		'menu'           => $navmenu_id,
 		'gm_preset_id'   => $preset_id,
 		'theme_location' => GroovyMenuUtils::getMasterLocation(),
 		'menu_class'     => 'nav-menu',

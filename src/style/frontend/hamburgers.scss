@@ -1,0 +1,28 @@
+@import '../../node_modules/hamburgers/dist/hamburgers';
+
+.gm-burger {
+  transition: all 0.1s;
+}
+
+.gm-burger .hamburger-box {
+  margin-top: 8px;
+}
+
+.gm-main-menu-wrapper .gm-fullscreen-close {
+  position: absolute;
+  top: 10%;
+  right: 8%;
+  display: block;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  transition: transform linear .2s;
+}
+
+.gm-action__gm_before_mobile_hamburger,
+.gm-action__gm_after_mobile_hamburger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}

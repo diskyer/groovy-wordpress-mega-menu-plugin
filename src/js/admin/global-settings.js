@@ -92,11 +92,13 @@ document.addEventListener('DOMContentLoaded', () => {
         .forEach((wrapper) => {
           let presetField = wrapper.querySelector('.gm-subselect--preset');
           let menuField = wrapper.querySelector('.gm-subselect--navmenu');
+          let typeField = wrapper.querySelector('.gm-subselect--type');
           let taxonomy = presetField.dataset.taxonomy;
           let valuePreset = presetField[presetField.selectedIndex].value;
           let valueMenu = menuField.value;
+          let valueType = typeField.value;
 
-          collectValues.push(taxonomy + ':::' + valuePreset + '@' + valueMenu);
+          collectValues.push(taxonomy + ':::' + valuePreset + '@' + valueMenu + ':::' + valueType);
         });
 
       document.querySelector('.gm-taxonomy_preset').value = collectValues.join();
@@ -136,8 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function deleteIconPack () {
+    let nonceField = document.getElementById('gm-nonce-editor-field');
+    let nonce = nonceField ? nonceField.value : '';
     let iconPack = this.closest('.groovy-iconset');
-    let url = `?page=groovy_menu_settings&action=deleteFont&name=${iconPack.dataset.name}`;
+    let url = `?page=groovy_menu_settings&action=deleteFont&name=${iconPack.dataset.name}&gm_nonce=${nonce}`;
 
     axios.get(url);
     iconPack.remove();

@@ -47,7 +47,7 @@ GROOVY DASHBOARD HEADER
 ***************************************/
 
 .gm-dashboard-container {
-  margin: 20px;
+  margin: 40px 20px;
 
   * {
     box-sizing: border-box;
@@ -608,6 +608,7 @@ GENERAL SETTINGS MODAL
   display: inline-block;
   float: left;
   padding: 10px 24px;
+  line-height: 1;
   transition: border-color ease-in-out 0.15s, color ease-in-out 0.15s;
   vertical-align: middle;
   color: #686868;
@@ -630,7 +631,6 @@ GENERAL SETTINGS MODAL
 .select-icon {
   position: relative;
   z-index: 999;
-  top: 1px;
   left: -2px;
   float: left;
   padding: 14px 20px;
@@ -883,12 +883,28 @@ GENERAL SETTINGS MODAL
 
 .preview-size-change__tabs,
 .preview-color-change__tabs,
-.preview-sticky-change__tabs {
+.preview-sticky-change__tabs,
+.preview-navmenu-change__tabs {
   display: flex;
 }
 
 .preview-sticky-change__tabs {
-  padding-right: 360px;
+  padding-right: 8px;
+}
+
+.preview-navmenu-change__tabs {
+  padding-right: 60px;
+  min-width: 280px;
+
+  .select-styled::after {
+    position: relative;
+    top: 12px;
+    right: -16px;
+  }
+
+  .select-styled.active::after {
+    top: -12px;
+  }
 }
 
 .value {
@@ -900,7 +916,8 @@ GENERAL SETTINGS MODAL
   align-items: center;
 }
 
-#toplevel_page_groovy_menu_settings .dashicons-admin-generic::before, #toplevel_page_groovy_menu_welcome .dashicons-admin-generic::before {
+#toplevel_page_groovy_menu_settings .dashicons-admin-generic::before,
+#toplevel_page_groovy_menu_welcome .dashicons-admin-generic::before {
   content: '';
   background-image: url('../images/groovy.svg');
   background-repeat: no-repeat;

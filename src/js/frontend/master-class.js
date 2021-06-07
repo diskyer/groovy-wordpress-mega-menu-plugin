@@ -10,13 +10,13 @@ import fixMenuCloseOnIOS, {
   isTargetScrollbar,
   getElemParents
 } from '../shared/helpers';
-import { scrollToId, setCurrentItem } from './one-page';
+import {scrollToId, setCurrentItem} from './one-page';
 
-import { initPaddingsAlignCenter, splitMenu } from './split';
-import { disableStickyNav, enableStickyNav, initStickyNav } from './sticky';
-import { initOffcanvas, offcanvasSlide, offcanvasWrap } from './offcanvas';
-import { initExpanding, expandingSidebarEvents } from './expanding';
-import { initMenuThumbnails } from './thumbnails';
+import {initPaddingsAlignCenter, splitMenu} from './split';
+import {disableStickyNav, enableStickyNav, initStickyNav} from './sticky';
+import {initOffcanvas, offcanvasSlide, offcanvasWrap} from './offcanvas';
+import {initExpanding, expandingSidebarEvents} from './expanding';
+import {initMenuThumbnails} from './thumbnails';
 
 import SmoothScroll from 'smooth-scroll';
 
@@ -28,20 +28,38 @@ import {
   dropdownOpen,
   dropdownClose
 } from './dropdown';
-import { overlapMenu } from './overlap';
-import { reinsertCompiledStyles } from './save-styles';
+import {overlapMenu} from './overlap';
+import {reinsertCompiledStyles} from './save-styles';
+import {watchWooMiniCartCounter} from './woo-minicart';
 
 class GroovyMenu {
-  constructor (selector, options) {
-    this.selector = document.querySelector(`${this.selector}`);
+  constructor(selector, options) {
     this.options = options;
+
+    if (typeof selector === 'string') {
+      this.selector = document.querySelector(`${selector}`);
+    } else if (typeof selector === 'object') {
+      this.selector = selector;
+    } else {
+      this.selector = null;
+    }
+
   }
 
-  init () {
+  init() {
+
+    // if GM has object - then init, else return null;
+    if (this.selector) {
+      this.selector.classList.add('gm-init-done');
+    } else {
+      return;
+    }
+
     let options = this.options;
 
     let gmStyles = new GmStyles(options);
     let cssGenerated = gmStyles.get();
+    let headerStyle = parseInt(options.header.style, 10);
     const body = document.body;
     const wpAdminBar = document.querySelector('#wpadminbar');
     let navbarSearchContainer = document.querySelector('.gm-search__fullscreen-container');
@@ -49,7 +67,15 @@ class GroovyMenu {
     let navbar = document.querySelector('.gm-navbar');
     let navDrawer = document.querySelector('.gm-navigation-drawer');
 
-    let hamburgerMenu = document.querySelector('.gm-menu-btn');
+    let hamburgerMenu = (options.mobileIndependentCssHamburger && 2 !== headerStyle) ? document.querySelector('.gm-burger') : document.querySelector('.gm-menu-btn');
+    let hamburgerMenuType = (options.mobileIndependentCssHamburgerType) ? options.mobileIndependentCssHamburgerType : 'hamburger--squeeze';
+
+    if (options.mobileCustomHamburger) {
+      hamburgerMenu = document.querySelector('.gm-custom-hamburger');
+    }
+
+    let hamburgerMenuExpanded = (options.sidebarExpandingMenuShowSideIcon && 5 === headerStyle) ? document.querySelector('.gm-navbar .gm-menu-btn--expanded') : undefined;
+
     let mainMenuWrapper = document.querySelector('.gm-main-menu-wrapper');
     let toolbar = document.querySelector('.gm-toolbar');
     let navbarWrapper = document.querySelector('.gm-wrapper');
@@ -66,25 +92,48 @@ class GroovyMenu {
     }
 
     let scrollOptions = {
-      speed: 220,
+      speed: 400,
+      durationMax: 2000,
+      durationMin: 250,
+      clip: true,
+      easing: 'easeInOutQuad',
       scrollOffset: scrollOffset,
       offset() {
         return scrollOffset;
       },
       updateURL: false,
     };
+
+    if (options.scrollSpeedSettings) {
+      if (options.scrollSpeedSettingsMain) {
+        scrollOptions.speed = options.scrollSpeedSettingsMain;
+      }
+      if (options.scrollSpeedSettingsMin) {
+        scrollOptions.durationMin = options.scrollSpeedSettingsMin;
+      }
+      if (options.scrollSpeedSettingsMax) {
+        scrollOptions.durationMax = options.scrollSpeedSettingsMax;
+      }
+      if (options.scrollSpeedSettingsEasing) {
+        scrollOptions.easing = options.scrollSpeedSettingsEasing;
+      }
+    }
+
     let scroll = new SmoothScroll();
 
     let linksWithHashes = document.querySelectorAll('.menu-item > a[href^="#"]:not([href="#"])');
 
-    let headerStyle = parseInt(options.header.style, 10);
+    if (options.scrollHandleAllLinks) {
+      linksWithHashes = document.querySelectorAll('.menu-item a:not([href="#"])');
+    }
+
     const direction = isRtl() ? 'rtl' : 'ltr';
     let isTouchDevice = 'ontouchstart' in document.documentElement;
 
     fixMenuCloseOnIOS();
 
     // Check if window width less options.mobileWidth
-    function isMobile () {
+    function isMobile() {
       return isMobileHelper(options.mobileWidth);
     }
 
@@ -131,6 +180,10 @@ class GroovyMenu {
     }
 
     document.addEventListener('click', (e) => {
+      if (isMobile(options.mobileWidth) && options.mobilePreventAutoclose) {
+        return;
+      }
+
       if (isTargetScrollbar(e.target)
         || e.target.closest('.gm-open')) {
         return;
@@ -142,9 +195,53 @@ class GroovyMenu {
     });
 
 
-    let initDropdownAction = (e) => {
-      let delay = 210;
+    let initFrozenLinkAction = (e) => {
       let closestDropdown = e.target.closest('.gm-dropdown');
+      let gmMenuItem = e.target.closest('.gm-menu-item');
+      let isTopLevelClass = false;
+      if (closestDropdown) {
+        isTopLevelClass = closestDropdown.classList.contains('gm-menu-item--lvl-0');
+      }
+
+      if (!gmMenuItem) {
+        return;
+      }
+
+      let isFrozenLink = gmMenuItem.classList.contains('gm-frozen-link');
+
+      if (isFrozenLink && e.type === 'click') {
+        e.preventDefault();
+
+        if (!isMobile()) {
+          e.stopPropagation();
+        }
+
+        if (closestDropdown && isTopLevelClass) {
+
+          let isOpenedBefore = closestDropdown.classList.contains('gm-open');
+
+          dropdownCloseAll(0);
+
+          if (!isOpenedBefore) {
+            dropdownOpen(closestDropdown, options);
+          }
+
+        } else {
+          dropdownToggle(closestDropdown, options);
+        }
+
+        return false;
+      }
+
+    };
+
+
+    // Sub-Menus DROPDOWN action ----------------------------------------------------------------------------[ open ]---
+    let initDropdownAction = (e) => {
+      let delay = 210; // delay for diagonal navigation in sub-menus.
+      let closestDropdown = e.target.closest('.gm-dropdown');
+      let closestAnchor = e.target.closest('.gm-anchor');
+      let isClosestAnchorEmpty = closestAnchor && '#' === closestAnchor.getAttribute('href');
       let isTopLevelClass = false;
       let dropdownMenus = document.querySelectorAll('.gm-dropdown');
       let gmMainMenu = document.querySelector('#gm-main-menu');
@@ -155,9 +252,28 @@ class GroovyMenu {
         isTopLevelClass = closestDropdown.classList.contains('gm-menu-item--lvl-0');
       }
 
-      if (e.target.closest('.gm-caret')) {
+      // Don't scroll for empty # links.
+      if (isClosestAnchorEmpty && e.type === 'click') {
         e.preventDefault();
-        e.stopPropagation();
+      }
+
+      // Ignore work with previously frozen link.
+      if (
+        closestDropdown &&
+        closestDropdown.classList.contains('gm-frozen-link') &&
+        !e.target.closest('.gm-dropdown-menu-title') &&
+        e.type === 'click'
+      ) {
+        return false;
+      }
+
+      // fast toggle.
+      if (e.target.closest('.gm-caret') || e.target.closest('.gm-dropdown-menu-title') || (closestDropdown && isClosestAnchorEmpty && e.type === 'click')) {
+        e.preventDefault();
+
+        if (!isMobile()) {
+          e.stopPropagation();
+        }
 
         if (closestDropdown && isTopLevelClass) {
 
@@ -165,7 +281,7 @@ class GroovyMenu {
 
           dropdownCloseAll(0);
 
-          if (! isOpenedBefore) {
+          if (!isOpenedBefore) {
             dropdownOpen(closestDropdown, options);
           }
 
@@ -175,6 +291,7 @@ class GroovyMenu {
 
         return false;
       }
+
 
       if (dropdownMenus.length > 0) {
         dropdownMenus.forEach((el) => {
@@ -306,6 +423,7 @@ class GroovyMenu {
     };
 
 
+    // Sub-Menus DROPDOWN action ---------------------------------------------------------------------------[ close ]---
     let leaveDropdownAction = (e) => {
 
       let closestDropdown = e.target.closest('.gm-dropdown');
@@ -345,39 +463,107 @@ class GroovyMenu {
       }, delay));
     };
 
+    // Sub-Menus DROPDOWN action ---------------------------------------------------------------------------[ touch ]---
+    let initDropdownActionByTouch = (e) => {
+      let closestDropdown = e.target.closest('.gm-dropdown');
+      let closestAnchor = e.target.closest('.gm-anchor');
+      let isClosestAnchorEmpty = closestAnchor && '#' === closestAnchor.getAttribute('href');
+      let isTopLevelClass = false;
 
-    let gmAnchorItems = document.querySelectorAll('.gm-anchor, .gm-minicart, .gm-search, .mega-gm-dropdown > .gm-dropdown-menu-wrapper');
+      let closestMenuItem = e.target.closest('.gm-menu-item');
+
+      if (
+        !isClosestAnchorEmpty &&
+        !e.target.closest('.gm-caret') &&
+        closestMenuItem &&
+        closestMenuItem.classList &&
+        closestMenuItem.classList.contains('gm-dropdown') &&
+        !closestMenuItem.classList.contains('gm-open')
+      ) {
+
+        isTopLevelClass = closestMenuItem.classList.contains('gm-menu-item--lvl-0');
+
+        if (isTopLevelClass) {
+          dropdownCloseAll(0);
+          dropdownOpen(closestDropdown, options);
+        } else {
+          dropdownToggle(closestDropdown, options);
+        }
+
+        // Prevent next EventListener 'click'.
+        e.preventDefault();
+
+      }
+    };
+
+
+    // Frozen links must be frozen.
+    let gmFrozenLinkAnchorItems = document.querySelectorAll('.gm-frozen-link > .gm-anchor');
+    if (gmFrozenLinkAnchorItems) {
+      gmFrozenLinkAnchorItems.forEach((frozenItem) => {
+        frozenItem.addEventListener('click', initFrozenLinkAction);
+      });
+    }
+
+
+    let gmAnchorItems = document.querySelectorAll('#gm-main-menu .gm-anchor, .gm-minicart, .gm-search, #gm-main-menu .mega-gm-dropdown > .gm-dropdown-menu-wrapper');
     let gmMainMenu = document.querySelector('#gm-main-menu');
 
-    if (gmAnchorItems && options.showSubmenu === 'hover' && !isMobile()) {
-      gmAnchorItems.forEach((dropdownItem) => {
+    if (gmAnchorItems) {
 
-        let menuItem = dropdownItem.closest('.gm-menu-item');
-
-        dropdownItem.addEventListener('click', initDropdownAction);
-
-        if (!isTouchDevice) {
-          dropdownItem.addEventListener('mouseenter', initDropdownAction);
-          if (menuItem) {
-            menuItem.addEventListener('mouseleave', leaveDropdownAction);
-          } else {
-            dropdownItem.addEventListener('mouseleave', leaveDropdownAction);
+      // By default at any case click action must work.
+      if (gmAnchorItems) {
+        gmAnchorItems.forEach((dropdownItem) => {
+          if (isTouchDevice) {
+            dropdownItem.addEventListener('touchend', initDropdownActionByTouch);
           }
-        }
-      });
-
-      if (!isTouchDevice && gmMainMenu) {
-        gmMainMenu.addEventListener('mouseleave', () => {
-          dropdownCloseAll(750);
+          dropdownItem.addEventListener('click', initDropdownAction);
         });
       }
+
+      // Mouse hover actions for desktop menu.
+      if (options.showSubmenu === 'hover') {
+        gmAnchorItems.forEach((dropdownItem) => {
+
+          let menuItem = dropdownItem.closest('.gm-menu-item');
+
+          if (!isTouchDevice) {
+            dropdownItem.addEventListener('mouseenter', initDropdownAction);
+            if (menuItem) {
+              menuItem.addEventListener('mouseleave', leaveDropdownAction);
+            } else {
+              dropdownItem.addEventListener('mouseleave', leaveDropdownAction);
+            }
+          }
+        });
+
+        if (!isTouchDevice && gmMainMenu) {
+          gmMainMenu.addEventListener('mouseleave', () => {
+            dropdownCloseAll(500);
+          });
+        }
+      }
+
     }
 
-    if (gmAnchorItems && (options.showSubmenu === 'click' || isMobile())) {
-      gmAnchorItems.forEach((dropdownItem) => {
+    // Click (touch) action for mobile menu items.
+    let gmAnchorItemsMobile = document.querySelectorAll('.gm-mobile-menu-container .gm-anchor');
+    if (gmAnchorItemsMobile) {
+      gmAnchorItemsMobile.forEach((dropdownItem) => {
+        if (isTouchDevice) {
+          dropdownItem.addEventListener('touchend', initDropdownActionByTouch);
+        }
         dropdownItem.addEventListener('click', initDropdownAction);
       });
     }
+
+    let gmDropdownTitleElems = document.querySelectorAll('.gm-dropdown-menu-wrapper .gm-dropdown-menu-title');
+    if (gmDropdownTitleElems) {
+      gmDropdownTitleElems.forEach((dropdownTitleItem) => {
+        dropdownTitleItem.addEventListener('click', initDropdownAction);
+      });
+    }
+
 
     if (options.stickyHeader !== undefined) {
       initStickyNav({
@@ -408,6 +594,10 @@ class GroovyMenu {
       }
     }
 
+    if (hamburgerMenu && options.mobileIndependentCssHamburger && 2 !== headerStyle && !options.mobileCustomHamburger) {
+      hamburgerMenu.classList.add(hamburgerMenuType);
+    }
+
     initOffcanvas({
       options: options,
       navDrawer,
@@ -415,7 +605,7 @@ class GroovyMenu {
       hamburgerMenu
     });
 
-    function setOffcanvas () {
+    function setOffcanvas() {
       if (!isMobile() && headerStyle === 2) {
         if (options.minimalisticMenuOpenType === 'offcanvasSlideSlide') {
           offcanvasWrap(mainMenuWrapper, 'left', true);
@@ -431,6 +621,11 @@ class GroovyMenu {
       }
 
       if (isMobile()) {
+        // Prevent wrap if mobile menu disabled.
+        if (options.mobileNavMenu === 'none') {
+          return;
+        }
+
         if (options.mobileNavDrawerOpenType === 'offcanvasSlideLeft') {
           offcanvasWrap(navDrawer, 'left');
         } else if (options.mobileNavDrawerOpenType === 'offcanvasSlideRight') {
@@ -447,9 +642,15 @@ class GroovyMenu {
 
 
     setOffcanvas();
-    offcanvasSlide();
 
+    if (isMobile() && options.mobileNavMenu === 'none') {
+      // Prevent slide wrap if mobile menu disabled.
+    } else {
+      offcanvasSlide();
+    }
 
+    // Resize window event.
+    let lastIsMobile = isMobile();
     window.addEventListener('resize', _.debounce(() => {
 
       overlapMenu(options);
@@ -462,16 +663,16 @@ class GroovyMenu {
 
       if (options.stickyHeader !== undefined) {
         if (
-          headerStyle === 1 ||
-          headerStyle === 2 ||
-          isMobile()
+          (headerStyle === 1 || headerStyle === 2) &&
+          lastIsMobile !== isMobile()
         ) {
+          lastIsMobile = isMobile();
           disableStickyNav();
           enableStickyNav();
         }
 
         if (
-          (headerStyle === 3 || headerStyle === 4) &&
+          (headerStyle === 3 || headerStyle === 4 || headerStyle === 5) &&
           !isMobile()
         ) {
           disableStickyNav();
@@ -509,9 +710,11 @@ class GroovyMenu {
         if (item.classList.contains('fullscreen') || isMobile()) {
           navbarSearchContainer.classList.remove('gm-hidden');
           setTimeout(() => {
-            navbarSearchContainer.querySelector('.gm-search__input')
-              .focus();
-          }, 200);
+            let searchForm = navbarSearchContainer.querySelector('.gm-search__input');
+            if (searchForm) {
+              searchForm.focus();
+            }
+          }, 230);
           return;
         }
 
@@ -522,9 +725,11 @@ class GroovyMenu {
           }
           dropdownToggle(item.closest('.gm-search'), options);
           setTimeout(() => {
-            item.querySelector('.gm-search__input')
-              .focus();
-          }, 200);
+            let searchForm = item.querySelector('.gm-search__input');
+            if (searchForm) {
+              searchForm.focus();
+            }
+          }, 230);
           return;
         }
       });
@@ -537,7 +742,7 @@ class GroovyMenu {
       });
     }
 
-    function setPagePositionByHash () {
+    function setPagePositionByHash() {
       let target = window.location.hash;
 
       if (target.length) {
@@ -585,16 +790,19 @@ class GroovyMenu {
     initExpanding({
       options: options,
       navbar,
-      hamburgerMenu
+      hamburgerMenuExpanded
     });
 
     expandingSidebarEvents();
 
 
-    if (options.scrollbarEnable) {
+    if (options.scrollbarEnable || options.scrollbarEnableMobile) {
       initScrollbar(options);
     }
 
+    if (options.woocommerceCart) {
+      watchWooMiniCartCounter();
+    }
 
   }
 }

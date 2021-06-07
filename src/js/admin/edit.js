@@ -216,25 +216,27 @@ document.addEventListener('DOMContentLoaded', () => {
       let options = {
         el: gmPicker,
         comparison: false,
+        theme: 'monolith', // or 'classic', or 'monolith', or 'nano'
         default: defaultColor,
-        position: 'middle',
+        position: 'bottom-start',
+        appClass: 'gm-pickr-container',
         components: {
-          preview: false,
+          preview: true,
           opacity: true,
           hue: true,
           interaction: {
             hex: true,
             rgba: true,
-            hsla: false,
-            hsva: false,
-            cmyk: false,
+            hsla: true,
+            hsva: true,
+            cmyk: true,
             input: true,
             clear: true,
             save: true
           },
         },
-        strings: {
-          clear: 'Reset'
+        i18n: {
+          'btn:clear': 'Reset'
         }
       };
       const pickr = new Pickr(options);
@@ -259,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         colorInput.value = pickr.getColor()
           .toRGBA()
-          .toString();
+          .toString(0);
 
         let isClearBtn = pickr.getRoot()
           .button
@@ -267,15 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
           .contains('clear');
 
         if (isClearBtn) {
-          if (defaultColor === '') {
-            colorInput.value = '';
-            pickr.getRoot().interaction.result.value = '';
-            pickr.setColor(null, true);
-            return;
-          } else {
-            pickr.setColor(defaultColor);
-            return;
-          }
+          colorInput.value = '';
+          pickr.getRoot().interaction.result.value = '';
+          pickr.setColor(null, true);
+          return;
         }
 
         if (pickr.getRoot().interaction.result.value === '') {
@@ -283,12 +280,14 @@ document.addEventListener('DOMContentLoaded', () => {
           pickr.setColor(null, true);
           return;
         }
+
+        pickr.hide();
       });
 
       pickr.on('change', _.debounce(() => {
         colorInput.value = pickr.getColor()
           .toRGBA()
-          .toString();
+          .toString(0);
       }),50);
     });
   }
